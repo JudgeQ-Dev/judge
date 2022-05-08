@@ -4,6 +4,9 @@
 # cmake build directory
 /build
 
+# clangd cache directory
+/.cache
+
 # configuration file
 config.json
 
