@@ -1,4 +1,4 @@
-import { SandboxStatus } from "simple-sandbox";
+import { SandboxStatus } from "@judgeq/simple-sandbox";
 
 import { safelyJoinPath } from "@/utils";
 import { prependOmittableString, readFileOmitted } from "@/omittableString";
