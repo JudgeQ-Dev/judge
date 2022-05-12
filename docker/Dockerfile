@@ -16,6 +16,8 @@ RUN apt update \
     zstd \
     wget \
     libfmt-dev \
+    lsb-release \
+    software-properties-common \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
     && ./llvm.sh ${LLVM_VERSION} all \
