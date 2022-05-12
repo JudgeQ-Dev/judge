@@ -1,6 +1,8 @@
+#include <cstddef>
+
 #include <testlib.h>
 
-void builtinCheckerBinary() {
+inline void builtinCheckerBinary() {
     // It will be slower to use testlib's readChar(), so use <cstdio> instead
     FILE *fout = fopen(ouf.name.c_str(), "rb");
     FILE *fans = fopen(ans.name.c_str(), "rb");
@@ -10,18 +12,21 @@ void builtinCheckerBinary() {
 
     size_t lenOut = ftell(fout), lenAns = ftell(fans);
 
-    if (lenAns > lenOut)
+    if (lenAns > lenOut) {
         quitf(_wa, "Output is shorter than answer - expected %zu bytes but found %zu bytes", lenAns, lenOut);
-    
-    if (lenOut > lenAns)
+    }
+
+    if (lenOut > lenAns) {
         quitf(_wa, "Output is longer than answer - expected %zu bytes but found %zu bytes", lenAns, lenOut);
-    
+    }
+
     rewind(fout);
     rewind(fans);
 
-    const size_t BUFFER_SIZE = 2 * 1024 * 1024;
+    constexpr size_t BUFFER_SIZE = static_cast<const size_t>(2 * 1024 * 1024);
     static char bufferOut[BUFFER_SIZE], bufferAns[BUFFER_SIZE];
     size_t current = 0;
+
     while (!feof(fout)) {
         size_t sout = fread(bufferOut, 1, BUFFER_SIZE, fout);
         size_t sans = fread(bufferAns, 1, BUFFER_SIZE, fans);
@@ -32,13 +37,13 @@ void builtinCheckerBinary() {
 
         for (size_t i = 0; i < sout; i++) {
             current++;
-            if (bufferOut[i] != bufferAns[i])
-                quitf(
-                    _wa, "%zu%s byte differ - expected: '%#04x', found: '%#04x'",
-                    current,
-                    englishEnding(current).c_str(),
-                    bufferAns[i], bufferOut[i]
-                );
+
+            // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-constant-array-index)
+            if (bufferOut[i] != bufferAns[i]) {
+                quitf(_wa, "%zu%s byte differ - expected: '%#04x', found: '%#04x'", current,
+                        // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-constant-array-index)
+                        englishEnding(static_cast<int>(current)).c_str(), bufferAns[i], bufferOut[i]);
+            }
         }
     }
 
