@@ -17,8 +17,8 @@ RUN apt update \
     wget \
     libfmt-dev \
     && wget https://apt.llvm.org/llvm.sh \
-    && chmod +x llvm.sh \\
-    && ./llvm.sh ${LLVM_VERSION} all \\
+    && chmod +x llvm.sh \
+    && ./llvm.sh ${LLVM_VERSION} all \
     && rm llvm.sh \
     && cd judge-core \
     && npm i -g pnpm \
