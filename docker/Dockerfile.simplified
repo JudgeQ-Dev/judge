@@ -30,6 +30,7 @@ COPY --from=judgeq/sandbox-rootfs:ubuntu20.04 /root/${ROOTFS_TARGET_NAME} ./
 ENV JUDGEQ_JUDGE_CONFIG_FILE=/root/config/config.yaml
 
 RUN chmod +x /root/docker_entry.sh \
+    && cd judge-core \
     && npm i -g pnpm \
     && apk add tzdata \
     && apk add arch-install-scripts \
