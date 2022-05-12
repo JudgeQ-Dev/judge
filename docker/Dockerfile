@@ -10,11 +10,19 @@ COPY --from=judgeq/sandbox-rootfs:ubuntu20.04 /root/${ROOTFS_TARGET_NAME} ./
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN cd judge-core \
+RUN apt update \
+    && apt install --no-install-recommends --no-install-suggests -y \
+    zstd \
+    wget \
+    libfmt-dev \
+    && wget https://apt.llvm.org/llvm.sh \
+    && chmod +x llvm.sh \\
+    && ./llvm.sh 14 all \\
+    && rm llvm.sh \
+    && cd judge-core \
     && npm i -g pnpm \
-    && pnpm i \
+    && CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++" LDFLAGS="-stdlib=libc++ -lc++abi -fuse-ld=lld" pnpm i \
     && cp ./docker/docker_entry.sh /root/docker_entry.sh \
-    && apt install --no-install-recommends --no-install-suggests -y zstd \
     && tar --use-compress-program=unzstd -xvf /root/${ROOTFS_TARGET_NAME} -C /opt/ \
     && rm -rf /root/${ROOTFS_TARGET_NAME}
 
