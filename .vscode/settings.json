@@ -82,6 +82,7 @@
         "randomstring",
         "rootfs",
         "sandboxed",
+        "Shellcheck",
         "sout",
         "stdlib",
         "Testcase",
