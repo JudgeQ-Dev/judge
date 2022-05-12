@@ -76,6 +76,7 @@
         "Napi",
         "NOLINT",
         "NOLINTNEXTLINE",
+        "Omited",
         "Omittable",
         "pnpm",
         "quitf",

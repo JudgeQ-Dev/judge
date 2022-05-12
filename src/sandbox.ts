@@ -143,7 +143,9 @@ export async function startSandbox(taskId: string, sandboxConfig: SandboxConfig)
         await Promise.all(mounts.map((mount) => setSandboxUserPermission(mount.mappedPath.outside, !mount.readOnly))),
     ]);
 
-    if (taskId) rpc.ensureNotCanceled(taskId);
+    if (taskId) {
+        rpc.ensureNotCanceled(taskId);
+    }
 
     const preservedFileDescriptors = sandboxConfig.preservedFileDescriptors || [];
     preservedFileDescriptors.forEach((fd) => fd && fd.setCloseOnExec(false));

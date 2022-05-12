@@ -22,7 +22,7 @@ export function safelyJoinPath(basePath: MappedPath | string, ...paths: string[]
     function doSafelyJoin(basePath: string, paths: string[]) {
         // path.normalize ensures the `../`s is on the left side of the result path
         const childPath = normalize(join(...paths));
-        if (childPath.startsWith(".."))
+        if (childPath.startsWith("..")) {
             throw new Error(
                 `Invalid path join: ${JSON.stringify(
                     {
@@ -33,6 +33,7 @@ export function safelyJoinPath(basePath: MappedPath | string, ...paths: string[]
                     2,
                 )}`,
             );
+        }
 
         return join(basePath, childPath);
     }
@@ -66,6 +67,7 @@ export async function readFileLimited(filePath: string, lengthLimit: number): Pr
             if (e.code === "ENOENT") return "";
             throw e;
         }
+
         const actualSize = (await file.stat()).size;
         const buf = Buffer.allocUnsafe(Math.min(actualSize, lengthLimit));
         const { bytesRead } = await file.read(buf, 0, buf.length, 0);
@@ -106,7 +108,9 @@ export function merge<K extends Key, V>(
 ): Record<string, V>;
 
 export function merge<K extends Key, V>(baseRecord: OverridableRecord<K, V>, overrideRecord: OverridableRecord<K, V>) {
-    if (!overrideRecord) return baseRecord;
+    if (!overrideRecord) {
+        return baseRecord;
+    }
 
     const result: OverridableRecord<K, V> = { ...baseRecord };
     Reflect.ownKeys(overrideRecord).forEach((key) => {
@@ -118,5 +122,6 @@ export function merge<K extends Key, V>(baseRecord: OverridableRecord<K, V>, ove
             else result[key] = valueOrReducer;
         } else result[key] = valueOrReducer;
     });
+
     return result;
 }

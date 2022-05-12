@@ -47,7 +47,9 @@ export interface SystemInfo {
 let cachedResult: SystemInfo;
 
 export default async function getSystemInfo(): Promise<SystemInfo> {
-    if (cachedResult) return cachedResult;
+    if (cachedResult) {
+        return cachedResult;
+    }
 
     const [osInfo, cpu, cpuFlags, mem, memLayout] = await Promise.all([
         systeminformation.osInfo(),

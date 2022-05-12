@@ -20,6 +20,7 @@ export async function runTaskQueued<T>(task: (taskWorkingDirectory: string, disp
     return await queue.add(async () => {
         const taskWorkingDirectory = availableWorkingDirectories.pop();
         const disposer = new Disposer();
+
         try {
             await ensureDirectoryEmpty(taskWorkingDirectory);
             return await task(taskWorkingDirectory, disposer);

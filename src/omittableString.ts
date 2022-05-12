@@ -21,19 +21,24 @@ export async function readFileOmitted(filePath: string, lengthLimit: number): Pr
         const buffer = Buffer.allocUnsafe(Math.min(fullLength, lengthLimit));
         const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
         const data = buffer.toString("utf8");
-        if (bytesRead < fullLength)
+
+        if (bytesRead < fullLength) {
             return {
                 data,
                 omittedLength: fullLength - bytesRead,
             };
-        else return data;
+        } else {
+            return data;
+        }
     } finally {
         if (file) await file.close();
     }
 }
 
 export function stringToOmited(str: string, lengthLimit: number): OmittableString {
-    if (str.length <= lengthLimit) return str;
+    if (str.length <= lengthLimit) {
+        return str;
+    }
 
     const omitted = str.length - lengthLimit;
     return {

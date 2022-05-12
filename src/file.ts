@@ -56,7 +56,9 @@ async function downloadFile(url: string, fileUuid: string) {
             // Download success!
             break;
         } catch (e) {
-            if (retry !== 0) continue;
+            if (retry !== 0) {
+                continue;
+            }
 
             if (abortController.signal.aborted) {
                 throw new Error(
@@ -88,7 +90,9 @@ export async function ensureFiles(fileUuids: string[]) {
     winston.verbose(`ensureFiles: ${fileUuids.length - nonExists.length} files already exists`);
     winston.verbose(`ensureFiles: ${nonExists.length} files to download`);
 
-    if (nonExists.length === 0) return null;
+    if (nonExists.length === 0) {
+        return null;
+    }
 
     const alreadyDownloading: Promise<void>[] = nonExists
         .map((fileUuid) => downloadingFiles.get(fileUuid))
@@ -135,9 +139,13 @@ const fileHashCache = new LRUCache<string, Promise<string>>({
 
 const emptyDataHash = crypto.createHash("sha256").update("").digest("hex");
 export async function getFileHash(fileUuid: string) {
-    if (!fileUuid) return emptyDataHash;
+    if (!fileUuid) {
+        return emptyDataHash;
+    }
 
-    if (fileHashCache.has(fileUuid)) return await fileHashCache.get(fileUuid);
+    if (fileHashCache.has(fileUuid)) {
+        return await fileHashCache.get(fileUuid);
+    }
 
     const promise = new Promise<string>((resolve, reject) => {
         const hash = crypto.createHash("sha256");

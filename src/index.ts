@@ -10,5 +10,7 @@ if (process.getuid() !== 0) {
 }
 
 rpc.connect().then(() => {
-    for (let i = 0; i < config.taskConsumingThreads; i++) rpc.startTaskConsumerThread(i);
+    for (let i = 0; i < config.taskConsumingThreads; i++) {
+        rpc.startTaskConsumerThread(i);
+    }
 });
