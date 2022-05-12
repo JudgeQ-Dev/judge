@@ -14,7 +14,7 @@ rpcTimeout: 20000
 downloadTimeout: 20000
 downloadRetry: 3
 sandbox:
-  rootfs: /opt/rootfs-ng
+  rootfs: /opt/rootfs
   user: sandbox
   hostname: null
   environments:
