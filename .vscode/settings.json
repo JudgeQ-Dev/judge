@@ -68,6 +68,7 @@
         "fout",
         "judgeq",
         "libc",
+        "memfd",
         "mkdir",
         "Napi",
         "NOLINT",
@@ -80,6 +81,7 @@
         "sout",
         "stdlib",
         "vite",
-        "vitest"
+        "vitest",
+        "vtos"
     ]
 }

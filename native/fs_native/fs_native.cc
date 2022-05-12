@@ -1,14 +1,14 @@
+#include <grp.h>
 #include <napi.h>
+#include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <pwd.h>
-#include <grp.h>
 #include <unistd.h>
 #include <filesystem>
 
-using ReturnValueMaker = std::function<Napi::Value (Napi::Env env)>;
-using OperationExecuter = std::function<ReturnValueMaker ()>;
-using OperationHandler = std::function<OperationExecuter (const Napi::CallbackInfo &info)>;
+using ReturnValueMaker = std::function<Napi::Value(Napi::Env env)>;
+using OperationExecuter = std::function<ReturnValueMaker()>;
+using OperationHandler = std::function<OperationExecuter(const Napi::CallbackInfo &info)>;
 
 class AsyncFileSystemOperationWorker : public Napi::AsyncWorker {
 private:
@@ -17,10 +17,10 @@ private:
     Napi::Promise::Deferred deferred;
 
 public:
-    AsyncFileSystemOperationWorker(
-        Napi::Env env,
-        OperationExecuter operationExecuter
-    ) : Napi::AsyncWorker(env), operationExecuter(operationExecuter), deferred(Napi::Promise::Deferred::New(env)) {}
+    AsyncFileSystemOperationWorker(Napi::Env env, OperationExecuter operationExecuter)
+            : Napi::AsyncWorker(env),
+              operationExecuter(operationExecuter),
+              deferred(Napi::Promise::Deferred::New(env)) {}
 
     Napi::Promise getPromise() const {
         return deferred.Promise();
@@ -36,6 +36,7 @@ public:
 
     void OnOK() {
         Napi::Value returnValue;
+
         try {
             returnValue = returnValueMaker(Env());
         } catch (std::exception &ex) {
@@ -52,18 +53,22 @@ public:
     }
 };
 
-void traverse(const std::string &path, std::function<void (const std::string &)> onEntry) {
+void traverse(const std::string &path, std::function<void(const std::string &)> onEntry) {
     onEntry(path);
-    if (std::filesystem::is_directory(path))
-        for (const auto &entry : std::filesystem::recursive_directory_iterator(path))
+
+    if (std::filesystem::is_directory(path)) {
+        for (const auto &entry : std::filesystem::recursive_directory_iterator(path)) {
             onEntry(entry.path());
+        }
+    }
 };
 
 auto Init(Napi::Env env, Napi::Object exports) {
-    auto defineOperation = [&] (const std::string &name, OperationHandler handler) {
+    auto defineOperation = [&](const std::string &name, OperationHandler handler) {
         // Async version
-        exports.Set(name, Napi::Function::New(env, [=] (const Napi::CallbackInfo &info) -> Napi::Value {
+        exports.Set(name, Napi::Function::New(env, [=](const Napi::CallbackInfo &info) -> Napi::Value {
             OperationExecuter executer;
+
             try {
                 executer = handler(info);
             } catch (std::exception &ex) {
@@ -71,14 +76,14 @@ auto Init(Napi::Env env, Napi::Object exports) {
                 return info.Env().Undefined();
             }
 
-            auto worker = new AsyncFileSystemOperationWorker(info.Env(), executer);
+            auto *worker = new AsyncFileSystemOperationWorker(info.Env(), executer);
             worker->Queue();
 
             return worker->getPromise();
         }));
 
         // Sync version
-        exports.Set(name + "Sync", Napi::Function::New(env, [=] (const Napi::CallbackInfo &info) {
+        exports.Set(name + "Sync", Napi::Function::New(env, [=](const Napi::CallbackInfo &info) {
             try {
                 OperationExecuter executer = handler(info);
                 ReturnValueMaker returnValueMaker = executer();
@@ -90,129 +95,123 @@ auto Init(Napi::Env env, Napi::Object exports) {
         }));
     };
 
-    defineOperation("remove", [] (const Napi::CallbackInfo &info) {
+    defineOperation("remove", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
 
-        return [=] () {
+        return [=]() {
             std::filesystem::remove_all(path);
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return env.Undefined();
             };
         };
     });
 
-    defineOperation("copy", [] (const Napi::CallbackInfo &info) {
-        std::string src = info[0].As<Napi::String>().Utf8Value(),
-                    dst = info[1].As<Napi::String>().Utf8Value();
+    defineOperation("copy", [](const Napi::CallbackInfo &info) {
+        std::string src = info[0].As<Napi::String>().Utf8Value(), dst = info[1].As<Napi::String>().Utf8Value();
 
-        return [=] () {
-            std::filesystem::copy(
-                src,
-                dst,
-                std::filesystem::copy_options::recursive
-              | std::filesystem::copy_options::overwrite_existing
-              | std::filesystem::copy_options::copy_symlinks
-            );
+        return [=]() {
+            std::filesystem::copy(src, dst,
+                    std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing |
+                            std::filesystem::copy_options::copy_symlinks);
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return env.Undefined();
             };
         };
     });
 
-    defineOperation("exists", [] (const Napi::CallbackInfo &info) {
+    defineOperation("exists", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
 
-        return [=] () {
+        return [=]() {
             bool result = std::filesystem::exists(path);
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return Napi::Boolean::New(env, result);
             };
         };
     });
 
-    defineOperation("ensureDir", [] (const Napi::CallbackInfo &info) {
+    defineOperation("ensureDir", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
 
-        return [=] () {
+        return [=]() {
             std::filesystem::create_directories(path);
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return env.Undefined();
             };
         };
     });
 
-    defineOperation("emptyDir", [] (const Napi::CallbackInfo &info) {
+    defineOperation("emptyDir", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
 
-        return [=] () {
-            for (const auto &entry : std::filesystem::directory_iterator(path)) 
+        return [=]() {
+            for (const auto &entry : std::filesystem::directory_iterator(path)) {
                 std::filesystem::remove_all(entry.path());
+            }
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return env.Undefined();
             };
         };
     });
 
     // std::filesystem doesn't support file_size() on directories well, so use POSIX APIs instead.
-    defineOperation("calcSize", [] (const Napi::CallbackInfo &info) {
+    defineOperation("calcSize", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
 
-        return [=] () {
+        return [=]() {
             uintmax_t result = 0;
 
             // Get size with lstat for each entry
-            traverse(path, [&] (const std::string &entryPath) {
+            traverse(path, [&](const std::string &entryPath) {
                 struct stat lstatResult;
+
                 int status = lstat(entryPath.c_str(), &lstatResult);
                 if (status != 0) {
                     int err = errno;
                     throw std::filesystem::filesystem_error(
-                        "lstat(" + entryPath + ")",
-                        std::error_code(err, std::system_category())
-                    );
+                            "lstat(" + entryPath + ")", std::error_code(err, std::system_category()));
                 }
 
                 result += lstatResult.st_size;
             });
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return Napi::Number::From(env, result);
             };
         };
     });
 
-    defineOperation("chmodown", [] (const Napi::CallbackInfo &info) {
+    defineOperation("chmodown", [](const Napi::CallbackInfo &info) {
         std::string path = info[0].As<Napi::String>().Utf8Value();
         auto parameters = info[1].As<Napi::Object>();
-        
-        auto parameterMode = parameters.Get("mode"),
-             parameterOwner = parameters.Get("owner"),
-             parameterGroup = parameters.Get("group");
-        bool changeMode = !(parameterMode.IsNull() || parameterMode.IsUndefined()),
-             changeOwner = !(parameterOwner.IsNull() || parameterOwner.IsUndefined()),
-             changeGroup = !(parameterGroup.IsNull() || parameterGroup.IsUndefined());
 
-        mode_t mode;
-        uid_t owner;
-        gid_t group;
+        auto parameterMode = parameters.Get("mode");
+        auto parameterOwner = parameters.Get("owner");
+        auto parameterGroup = parameters.Get("group");
+
+        bool changeMode = !(parameterMode.IsNull() || parameterMode.IsUndefined());
+        bool changeOwner = !(parameterOwner.IsNull() || parameterOwner.IsUndefined());
+        bool changeGroup = !(parameterGroup.IsNull() || parameterGroup.IsUndefined());
+
+        mode_t mode = 0;
+        uid_t owner = 0;
+        gid_t group = 0;
 
         if (changeMode) {
             mode = parameterMode.As<Napi::Number>().Int64Value();
         }
 
-        struct passwd pwd, *pwdResult;
+        struct passwd pwd, *pwdResult = nullptr;
         long bufferSize = sysconf(_SC_GETPW_R_SIZE_MAX);
         if (bufferSize == -1) {
             int err = errno;
             throw std::filesystem::filesystem_error(
-                "sysconf(_SC_GETPW_R_SIZE_MAX)",
-                std::error_code(err, std::system_category())
-            );
+                    "sysconf(_SC_GETPW_R_SIZE_MAX)", std::error_code(err, std::system_category()));
         }
         char buffer[bufferSize];
 
@@ -227,9 +226,7 @@ auto Init(Napi::Env env, Napi::Object exports) {
                 } else {
                     int err = errno;
                     throw std::filesystem::filesystem_error(
-                        "getpwnam_r(" + name + ")",
-                        std::error_code(err, std::system_category())
-                    );
+                            "getpwnam_r(" + name + ")", std::error_code(err, std::system_category()));
                 }
 
                 owner = pwd.pw_uid;
@@ -238,8 +235,9 @@ auto Init(Napi::Env env, Napi::Object exports) {
             }
         }
 
-        if (!changeOwner)
+        if (!changeOwner) {
             owner = -1;
+        }
 
         if (changeGroup) {
             if (parameterGroup.IsNumber()) {
@@ -247,34 +245,32 @@ auto Init(Napi::Env env, Napi::Object exports) {
             } else if (parameterGroup.IsString()) {
                 std::string name = parameterOwner.As<Napi::String>().Utf8Value();
 
-                struct group grp, *grpResult;
+                struct group grp, *grpResult = nullptr;
                 long bufferSize = sysconf(_SC_GETGR_R_SIZE_MAX);
                 if (bufferSize == -1) {
                     int err = errno;
                     throw std::filesystem::filesystem_error(
-                        "sysconf(_SC_GETGR_R_SIZE_MAX)",
-                        std::error_code(err, std::system_category())
-                    );
+                            "sysconf(_SC_GETGR_R_SIZE_MAX)", std::error_code(err, std::system_category()));
                 }
                 char buffer[bufferSize];
 
                 if (getgrnam_r(name.c_str(), &grp, buffer, bufferSize, &grpResult) == 0) {
-                    if (!pwdResult)
+                    if (!pwdResult) {
                         throw std::invalid_argument("No such group by name: " + name);
+                    }
                 } else {
                     int err = errno;
                     throw std::filesystem::filesystem_error(
-                        "getgrnam_r(" + name + ")",
-                        std::error_code(err, std::system_category())
-                    );
+                            "getgrnam_r(" + name + ")", std::error_code(err, std::system_category()));
                 }
 
                 group = grp.gr_gid;
             } else if (parameterGroup.IsBoolean()) {
                 if (parameterGroup.As<Napi::Boolean>().Value()) {
                     // Use the group of user
-                    if (!changeOwner)
+                    if (!changeOwner) {
                         throw std::invalid_argument("The owner is not specfied.");
+                    }
 
                     if (!pwdResult) {
                         if (getpwuid_r(owner, &pwd, buffer, bufferSize, &pwdResult) == 0) {
@@ -282,10 +278,8 @@ auto Init(Napi::Env env, Napi::Object exports) {
                                 throw std::invalid_argument("No such user by uid: " + std::to_string(owner));
                         } else {
                             int err = errno;
-                            throw std::filesystem::filesystem_error(
-                                "getpwuid_r(" + std::to_string(owner) + ")",
-                                std::error_code(err, std::system_category())
-                            );
+                            throw std::filesystem::filesystem_error("getpwuid_r(" + std::to_string(owner) + ")",
+                                    std::error_code(err, std::system_category()));
                         }
                     }
 
@@ -297,18 +291,17 @@ auto Init(Napi::Env env, Napi::Object exports) {
             }
         }
 
-        if (!changeGroup)
+        if (!changeGroup) {
             group = -1;
+        }
 
-        return [=] () {
-            traverse(path, [=] (const std::string &entryPath) {
+        return [=]() {
+            traverse(path, [=](const std::string &entryPath) {
                 if (changeMode) {
                     if (chmod(entryPath.c_str(), mode) != 0) {
                         int err = errno;
                         throw std::filesystem::filesystem_error(
-                            "chmod(" + entryPath + ")",
-                            std::error_code(err, std::system_category())
-                        );
+                                "chmod(" + entryPath + ")", std::error_code(err, std::system_category()));
                     }
                 }
 
@@ -316,14 +309,12 @@ auto Init(Napi::Env env, Napi::Object exports) {
                     if (chown(entryPath.c_str(), owner, group) != 0) {
                         int err = errno;
                         throw std::filesystem::filesystem_error(
-                            "chown(" + entryPath + ")",
-                            std::error_code(err, std::system_category())
-                        );
+                                "chown(" + entryPath + ")", std::error_code(err, std::system_category()));
                     }
                 }
             });
 
-            return [=] (Napi::Env env) {
+            return [=](Napi::Env env) {
                 return env.Undefined();
             };
         };

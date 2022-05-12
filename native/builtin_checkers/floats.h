@@ -18,7 +18,7 @@ void builtinCheckerFloats(int precision) {
         ans.readDouble();
         extraInAnsCount++;
     }
-    
+
     int extraInOufCount = 0;
 
     while (!ouf.seekEof()) {
@@ -26,11 +26,14 @@ void builtinCheckerFloats(int precision) {
         extraInOufCount++;
     }
 
-    if (extraInAnsCount > 0)
-        quitf(_wa, "Output is shorter than answer - expected %d elements but found %d elements", n + extraInAnsCount, n);
-    
-    if (extraInOufCount > 0)
+    if (extraInAnsCount > 0) {
+        quitf(_wa, "Output is shorter than answer - expected %d elements but found %d elements", n + extraInAnsCount,
+                n);
+    }
+
+    if (extraInOufCount > 0) {
         quitf(_wa, "Output is longer than answer - expected %d elements but found %d elements", n, n + extraInOufCount);
+    }
 
     quitf(_ok, "%d numbers", n);
 }
