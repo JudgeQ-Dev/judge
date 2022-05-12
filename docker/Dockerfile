@@ -35,7 +35,8 @@ RUN chmod +x /root/docker_entry.sh \
     && apk add arch-install-scripts \
     && apk add tar \
     && apk add zstd \
-    && tar --use-compress-program=unzstd -xvf /root/${ROOTFS_TARGET_NAME} -C /opt/
+    && tar --use-compress-program=unzstd -xvf /root/${ROOTFS_TARGET_NAME} -C /opt/ \
+    && rm /root/${ROOTFS_TARGET_NAME}
 
 ENTRYPOINT ["/root/docker_entry.sh"]
 
