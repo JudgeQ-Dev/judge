@@ -71,6 +71,7 @@
         "interactor",
         "judgeq",
         "libc",
+        "libfmt",
         "memfd",
         "mkdir",
         "Napi",

@@ -2,7 +2,7 @@
 
 The judge service of JudgeQ.
 
-# Features
+## Features
 
 * Download files from server automatically.
 * Run multiple tasks of multiple submissions in the same time.
@@ -17,11 +17,12 @@ These features are on the plan:
 * Other types of problem (Communication, ...)
 * Other forms of task (Hack, CustomTest, ...)
 
-# Deploying
+## Deploying
+
 You need a Linux system with:
 
 * Kernel booted with `cgroup_enable=memory swapaccount=1`.
-* A C++ 17 compiler (e.g. `g++-8` or `clang++-8`).
+* A C++ 17 compiler (e.g. `g++-11` or `clang++-13`).
 * A sandbox [rootfs](#Sandbox-Rootfs).
 
 Clone the git repo (`--recursive` is required for git submodules):
@@ -40,8 +41,8 @@ $ apt install libfmt-dev
 You may need to specify `CXX` environment variable to build with your C++ 17 compiler:
 
 ```bash
-$ export CXX=g++-8
-$ yarn
+$ export CXX=clang++-13
+$ pnpm
 $ cp config-example.yaml config.yaml
 ```
 
@@ -100,10 +101,11 @@ sandbox:
 Start it with:
 
 ```
-$ JUDGEQ_JUDGE_CONFIG_FILE=./config.yaml yarn start
+$ JUDGEQ_JUDGE_CONFIG_FILE=./config.yaml pnpm start
 ```
 
-# Parallel Judging
+## Parallel Judging
+
 You can run multiple judge clients with different key on multiple machines.
 
 You don't need (and are not expected) to run multiple instances of judge client on the same machine (except for testing purpose). Use `taskConsumingThreads` and `maxConcurrentTasks` options if you want to do parallel judging on one machine.
@@ -112,7 +114,8 @@ If you run multiple judge clients on the same machine for some testing purpose, 
 
 NEVER run multiple judge clients with the same `key` -- thay will conflit and none of them can consume tasks at all.
 
-# Sandbox RootFS
+## Sandbox RootFS
+
 The use of sandbox rootfs is aimed to isolate the access of user programs (and compiles) from the main system, to prevent some sensitive information to be stolen by user.
 
 You may download the official [sandbox-rootfs](https://github.com/judgeq-dev/sandbox-rootfs) directly from release or bootstrap it by yourself. You can also build a custom rootfs with your favorite disto.
