@@ -14,7 +14,7 @@ import {
     OmittableString,
     prependOmittableString,
     readFileOmitted,
-    stringToOmited
+    stringToOmited,
 } from "@/omittableString";
 import { getFile } from "@/file";
 import { ConfigurationError } from "@/error";
@@ -40,7 +40,7 @@ export enum TestcaseStatusTraditional {
     WrongAnswer = "WrongAnswer",
     Accepted = "Accepted",
 
-    JudgementFailed = "JudgementFailed"
+    JudgementFailed = "JudgementFailed",
 }
 
 export interface TestcaseResultTraditional {
@@ -91,7 +91,7 @@ async function runTestcase(
     testcaseIndex: number,
     testcase: TestcaseConfig,
     extraParameters: ExtraParametersTraditional,
-    taskWorkingDirectory: string
+    taskWorkingDirectory: string,
 ): Promise<TestcaseResultTraditional> {
     const [compileResult, customCheckerCompileResult] = extraParameters;
 
@@ -105,19 +105,19 @@ async function runTestcase(
             timeLimit,
             memoryLimit,
             inputFile: isSample ? null : testcase.inputFile,
-            outputFile: isSample ? null : testcase.outputFile
+            outputFile: isSample ? null : testcase.outputFile,
         },
         status: null,
-        score: 0
+        score: 0,
     };
 
     const binaryDirectory: MappedPath = {
         outside: compileResult.binaryDirectory,
-        inside: SANDBOX_INSIDE_PATH_BINARY
+        inside: SANDBOX_INSIDE_PATH_BINARY,
     };
     const workingDirectory = {
         outside: safelyJoinPath(taskWorkingDirectory, "working"),
-        inside: SANDBOX_INSIDE_PATH_WORKING
+        inside: SANDBOX_INSIDE_PATH_WORKING,
     };
 
     const tempDirectoryOutside = safelyJoinPath(taskWorkingDirectory, "temp");
@@ -147,7 +147,7 @@ async function runTestcase(
             stdoutFile: judgeInfo.fileIo ? null : outputFile.inside,
             stderrFile: stderrFile.inside,
             parameters: [],
-            compileResultExtraInfo: compileResult.extraInfo
+            compileResultExtraInfo: compileResult.extraInfo,
         }),
         time: timeLimit,
         memory: memoryLimit * 1024 * 1024,
@@ -156,13 +156,13 @@ async function runTestcase(
         extraMounts: [
             {
                 mappedPath: binaryDirectory,
-                readOnly: true
+                readOnly: true,
             },
             {
                 mappedPath: workingDirectory,
-                readOnly: false
-            }
-        ]
+                readOnly: false,
+            },
+        ],
     });
 
     const workingDirectorySize = await fsNative.calcSize(workingDirectory.outside);
@@ -186,13 +186,13 @@ async function runTestcase(
         ? stringToOmited(sample.inputData, serverSideConfig.limit.dataDisplay)
         : await readFileOmitted(
               getFile(task.extraInfo.testData[testcase.inputFile]),
-              serverSideConfig.limit.dataDisplay
+              serverSideConfig.limit.dataDisplay,
           );
     result.output = isSample
         ? stringToOmited(sample.outputData, serverSideConfig.limit.dataDisplay)
         : await readFileOmitted(
               getFile(task.extraInfo.testData[testcase.outputFile]),
-              serverSideConfig.limit.dataDisplay
+              serverSideConfig.limit.dataDisplay,
           );
     result.userOutput = await readFileOmitted(outputFile.outside, serverSideConfig.limit.dataDisplay);
     result.userError = await readFileOmitted(stderrFile.outside, serverSideConfig.limit.stderrDisplay);
@@ -222,7 +222,7 @@ async function runTestcase(
                       answerFile,
                       task.extraInfo.submissionContent.code,
                       workingDirectory,
-                      tempDirectoryOutside
+                      tempDirectoryOutside,
                   )
                 : await runBuiltinChecker(outputFile.outside, answerFile.outside, judgeInfo.checker);
 
@@ -257,7 +257,7 @@ export async function runTask(
         SubmissionContentTraditional,
         TestcaseResultTraditional,
         ExtraParametersTraditional
-    >
+    >,
 ) {
     const { judgeInfo } = task.extraInfo;
 
@@ -270,12 +270,12 @@ export async function runTask(
         const compileResult = await compile({
             language: judgeInfo.checker.language,
             code: await fs.promises.readFile(getFile(task.extraInfo.testData[judgeInfo.checker.filename]), "utf-8"),
-            compileAndRunOptions: judgeInfo.checker.compileAndRunOptions
+            compileAndRunOptions: judgeInfo.checker.compileAndRunOptions,
         });
 
         if (!(compileResult instanceof CompileResultSuccess)) {
             throw new ConfigurationError(
-                prependOmittableString("Failed to compile custom checker:\n\n", compileResult.message, true)
+                prependOmittableString("Failed to compile custom checker:\n\n", compileResult.message, true),
             );
         }
 
@@ -289,13 +289,13 @@ export async function runTask(
         extraSourceFiles: getExtraSourceFiles(
             judgeInfo,
             task.extraInfo.testData,
-            task.extraInfo.submissionContent.language
-        )
+            task.extraInfo.submissionContent.language,
+        ),
     });
 
     task.events.compiled({
         success: compileResult.success,
-        message: compileResult.message
+        message: compileResult.message,
     });
 
     if (!(compileResult instanceof CompileResultSuccess)) {
@@ -308,7 +308,7 @@ export async function runTask(
         await runCommonTask({
             task,
             extraParameters: [compileResult, customCheckerCompileResult],
-            onTestcase: runTestcase
+            onTestcase: runTestcase,
         });
     } finally {
         await compileResult.dereference();

@@ -104,7 +104,7 @@ async function setSandboxUserPermission(path: string, writeAccess: boolean): Pro
     await fsNative.chmodown(path, {
         mode: 0o755,
         owner: writeAccess ? sandboxUser.uid : 0,
-        group: writeAccess ? sandboxUser.gid : 0
+        group: writeAccess ? sandboxUser.gid : 0,
     });
 }
 
@@ -128,25 +128,25 @@ export async function startSandbox(taskId: string, sandboxConfig: SandboxConfig)
         {
             mappedPath: {
                 outside: sandboxConfig.tempDirectoryOutside,
-                inside: "/tmp"
+                inside: "/tmp",
             },
-            readOnly: false
-        }
+            readOnly: false,
+        },
     ]);
 
     await Promise.all([
         // Create the mount points in the sandbox rootfs
         await Promise.all(
-            mounts.map(mount => fsNative.ensureDir(safelyJoinPath(config.sandbox.rootfs, mount.mappedPath.inside)))
+            mounts.map((mount) => fsNative.ensureDir(safelyJoinPath(config.sandbox.rootfs, mount.mappedPath.inside))),
         ),
         // TODO: Use something like bindfs to set owner for the mount point instead
-        await Promise.all(mounts.map(mount => setSandboxUserPermission(mount.mappedPath.outside, !mount.readOnly)))
+        await Promise.all(mounts.map((mount) => setSandboxUserPermission(mount.mappedPath.outside, !mount.readOnly))),
     ]);
 
     if (taskId) rpc.ensureNotCanceled(taskId);
 
     const preservedFileDescriptors = sandboxConfig.preservedFileDescriptors || [];
-    preservedFileDescriptors.forEach(fd => fd && fd.setCloseOnExec(false));
+    preservedFileDescriptors.forEach((fd) => fd && fd.setCloseOnExec(false));
 
     const environments = merge(config.sandbox.environments, sandboxConfig.environments);
 
@@ -156,10 +156,10 @@ export async function startSandbox(taskId: string, sandboxConfig: SandboxConfig)
         process: sandboxConfig.process,
         chroot: config.sandbox.rootfs,
         hostname: config.sandbox.hostname,
-        mounts: mounts.map(mount => ({
+        mounts: mounts.map((mount) => ({
             src: mount.mappedPath.outside,
             dst: mount.mappedPath.inside,
-            limit: mount.readOnly ? 0 : -1
+            limit: mount.readOnly ? 0 : -1,
         })),
         redirectBeforeChroot: false,
         mountProc: true,
@@ -169,15 +169,15 @@ export async function startSandbox(taskId: string, sandboxConfig: SandboxConfig)
         stderr: typeof sandboxConfig.stderr === "object" ? (sandboxConfig.stderr || {}).fd : sandboxConfig.stderr,
         user: sandboxUser,
         cgroup: "",
-        parameters: [...parametersPrepend, ...(sandboxConfig.parameters || []).filter(x => x != null)],
+        parameters: [...parametersPrepend, ...(sandboxConfig.parameters || []).filter((x) => x != null)],
         environments: Object.entries(environments).map(([key, value]) => `${key}=${value}`),
         workingDirectory: sandboxConfig.workingDirectory,
-        stackSize: sandboxConfig.stackSize || sandboxConfig.memory
+        stackSize: sandboxConfig.stackSize || sandboxConfig.memory,
     };
 
     const sandbox = Sandbox.startSandbox(sandboxParameter);
 
-    preservedFileDescriptors.forEach(fd => fd && fd.setCloseOnExec(true));
+    preservedFileDescriptors.forEach((fd) => fd && fd.setCloseOnExec(true));
 
     const resultPromise = taskId
         ? // eslint-disable-next-line no-async-promise-executor
@@ -200,7 +200,7 @@ export async function startSandbox(taskId: string, sandboxConfig: SandboxConfig)
 
     return {
         waitForStop: () => resultPromise,
-        stop: () => sandbox.stop()
+        stop: () => sandbox.stop(),
     };
 }
 

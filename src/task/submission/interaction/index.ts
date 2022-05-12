@@ -14,7 +14,7 @@ import {
     stringToOmited,
     OmittableString,
     prependOmittableString,
-    isOmittableString
+    isOmittableString,
 } from "@/omittableString";
 import { getFile } from "@/file";
 import { ConfigurationError } from "@/error";
@@ -39,7 +39,7 @@ export enum TestcaseStatusInteraction {
     WrongAnswer = "WrongAnswer",
     Accepted = "Accepted",
 
-    JudgementFailed = "JudgementFailed"
+    JudgementFailed = "JudgementFailed",
 }
 
 export interface TestcaseResultInteraction {
@@ -88,7 +88,7 @@ async function runTestcase(
     testcase: TestcaseConfig,
     extraParameters: ExtraParametersInteraction,
     taskWorkingDirectory: string,
-    disposer: Disposer
+    disposer: Disposer,
 ): Promise<TestcaseResultInteraction> {
     const [compileResult, interactorCompileResult] = extraParameters;
 
@@ -101,23 +101,23 @@ async function runTestcase(
         testcaseInfo: {
             timeLimit,
             memoryLimit,
-            inputFile: isSample ? null : testcase.inputFile
+            inputFile: isSample ? null : testcase.inputFile,
         },
         status: null,
-        score: 0
+        score: 0,
     };
 
     const userBinaryDirectory: MappedPath = {
         outside: compileResult.binaryDirectory,
-        inside: SANDBOX_INSIDE_PATH_BINARY
+        inside: SANDBOX_INSIDE_PATH_BINARY,
     };
     const interactorBinaryDirectory: MappedPath = {
         outside: interactorCompileResult.binaryDirectory,
-        inside: SANDBOX_INSIDE_PATH_BINARY
+        inside: SANDBOX_INSIDE_PATH_BINARY,
     };
     const workingDirectory = {
         outside: safelyJoinPath(taskWorkingDirectory, "working"),
-        inside: SANDBOX_INSIDE_PATH_WORKING
+        inside: SANDBOX_INSIDE_PATH_WORKING,
     };
 
     const tempDirectoryOutside = safelyJoinPath(taskWorkingDirectory, "temp");
@@ -142,7 +142,7 @@ async function runTestcase(
 
     const environments = {
         INTERACTOR_INTERFACE: judgeInfo.interactor.interface,
-        INTERACTOR_SHARED_MEMORY_FD: String(sharedMemory ? sharedMemory.fd : -1)
+        INTERACTOR_SHARED_MEMORY_FD: String(sharedMemory ? sharedMemory.fd : -1),
     };
 
     const userRunConfig = userLanguageConfig.run({
@@ -155,7 +155,7 @@ async function runTestcase(
         stdoutFile: pipeUserToInteractor.write,
         stderrFile: userStderrFile.inside,
         parameters: [],
-        compileResultExtraInfo: compileResult.extraInfo
+        compileResultExtraInfo: compileResult.extraInfo,
     });
     const userSandbox = await startSandbox(task.taskId, {
         ...userRunConfig,
@@ -166,15 +166,15 @@ async function runTestcase(
         extraMounts: [
             {
                 mappedPath: userBinaryDirectory,
-                readOnly: true
+                readOnly: true,
             },
             {
                 mappedPath: workingDirectory,
-                readOnly: false
-            }
+                readOnly: false,
+            },
         ],
         preservedFileDescriptors: [pipeInteractorToUser.read, pipeUserToInteractor.write, sharedMemory],
-        environments: merge(userRunConfig.environments, environments)
+        environments: merge(userRunConfig.environments, environments),
     });
 
     // By default use the testcase's time limit.
@@ -190,7 +190,7 @@ async function runTestcase(
         stdoutFile: pipeInteractorToUser.write,
         stderrFile: interactorStderrFile.inside,
         parameters: [inputFile.inside, "/dev/null"],
-        compileResultExtraInfo: interactorCompileResult.extraInfo
+        compileResultExtraInfo: interactorCompileResult.extraInfo,
     });
     const interactorSandbox = await startSandbox(task.taskId, {
         ...interactorRunConfig,
@@ -201,15 +201,15 @@ async function runTestcase(
         extraMounts: [
             {
                 mappedPath: interactorBinaryDirectory,
-                readOnly: true
+                readOnly: true,
             },
             {
                 mappedPath: workingDirectory,
-                readOnly: false
-            }
+                readOnly: false,
+            },
         ],
         preservedFileDescriptors: [pipeUserToInteractor.read, pipeInteractorToUser.write, sharedMemory],
-        environments: merge(interactorRunConfig.environments, environments)
+        environments: merge(interactorRunConfig.environments, environments),
     });
 
     const interactorSandboxResult = await interactorSandbox.waitForStop();
@@ -242,7 +242,7 @@ async function runTestcase(
         ? stringToOmited(sample.inputData, serverSideConfig.limit.dataDisplay)
         : await readFileOmitted(
               getFile(task.extraInfo.testData[testcase.inputFile]),
-              serverSideConfig.limit.dataDisplay
+              serverSideConfig.limit.dataDisplay,
           );
     result.userError = await readFileOmitted(userStderrFile.outside, serverSideConfig.limit.stderrDisplay);
     result.time = userSandboxResult.time / 1e6;
@@ -281,7 +281,7 @@ export async function runTask(
         SubmissionContentInteraction,
         TestcaseResultInteraction,
         ExtraParametersInteraction
-    >
+    >,
 ) {
     const { judgeInfo } = task.extraInfo;
 
@@ -290,12 +290,12 @@ export async function runTask(
     const interactorCompileResult = await compile({
         language: judgeInfo.interactor.language,
         code: await fs.promises.readFile(getFile(task.extraInfo.testData[judgeInfo.interactor.filename]), "utf-8"),
-        compileAndRunOptions: judgeInfo.interactor.compileAndRunOptions
+        compileAndRunOptions: judgeInfo.interactor.compileAndRunOptions,
     });
 
     if (!(interactorCompileResult instanceof CompileResultSuccess)) {
         throw new ConfigurationError(
-            prependOmittableString("Failed to compile interactor:\n\n", interactorCompileResult.message, true)
+            prependOmittableString("Failed to compile interactor:\n\n", interactorCompileResult.message, true),
         );
     }
 
@@ -306,13 +306,13 @@ export async function runTask(
         extraSourceFiles: getExtraSourceFiles(
             judgeInfo,
             task.extraInfo.testData,
-            task.extraInfo.submissionContent.language
-        )
+            task.extraInfo.submissionContent.language,
+        ),
     });
 
     task.events.compiled({
         success: compileResult.success,
-        message: compileResult.message
+        message: compileResult.message,
     });
 
     if (!(compileResult instanceof CompileResultSuccess)) {
@@ -325,7 +325,7 @@ export async function runTask(
         await runCommonTask({
             task,
             extraParameters: [compileResult, interactorCompileResult],
-            onTestcase: runTestcase
+            onTestcase: runTestcase,
         });
     } finally {
         await compileResult.dereference();

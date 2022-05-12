@@ -1,3 +1,4 @@
+// eslint-disable-next-line camelcase
 import child_process from "child_process";
 
 /**
@@ -6,24 +7,28 @@ import child_process from "child_process";
  * Exit code = 100 means connection lost.
  */
 
+// eslint-disable-next-line no-constant-condition
 while (true) {
-  const child = child_process.fork("./src/index");
+    // eslint-disable-next-line camelcase
+    const child = child_process.fork("./src/index");
 
-  child.on("error", error => {
-    console.error(error);
-    child.kill("SIGKILL");
-    process.exit(-1);
-  });
-
-  await new Promise(resolve => {
-    child.on("exit", code => {
-      // 100: Disconnected
-      if (code === 100) {
-        // Restart child
-        return resolve();
-      }
-  
-      process.exit(code);
+    child.on("error", (error) => {
+        // eslint-disable-next-line no-console
+        console.error(error);
+        child.kill("SIGKILL");
+        process.exit(-1);
     });
-  });
-};
+
+    await new Promise((resolve) => {
+        // eslint-disable-next-line consistent-return
+        child.on("exit", (code) => {
+            // 100: Disconnected
+            if (code === 100) {
+                // Restart child
+                return resolve();
+            }
+
+            process.exit(code);
+        });
+    });
+}

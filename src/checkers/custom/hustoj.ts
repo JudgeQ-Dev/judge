@@ -10,12 +10,12 @@ export const checker: CustomChecker = {
         answerFile,
         code,
         workingDirectory,
-        runSandboxForCustomChecker
+        runSandboxForCustomChecker,
     ) {
         const sandboxResult = await runSandboxForCustomChecker(null, null, null, [
             inputFile.inside,
             answerFile.inside,
-            outputFile.inside
+            outputFile.inside,
         ]);
 
         if (sandboxResult.status !== SandboxStatus.OK) {
@@ -23,7 +23,7 @@ export const checker: CustomChecker = {
         }
 
         return {
-            score: sandboxResult.code === 0 ? 100 : 0
+            score: sandboxResult.code === 0 ? 100 : 0,
         };
-    }
+    },
 };

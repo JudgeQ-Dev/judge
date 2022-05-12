@@ -27,8 +27,8 @@ export interface CustomChecker {
             stdin: string,
             stdout: string,
             stderr: string,
-            parameters?: string[]
-        ) => Promise<SandboxResult>
+            parameters?: string[],
+        ) => Promise<SandboxResult>,
     ): Promise<CheckerResult | OmittableString>;
 }
 
@@ -39,7 +39,7 @@ const customCheckerInterfaces: Record<string, CustomChecker> = {
     lemon: require("./lemon").checker,
     hustoj: require("./hustoj").checker,
     qduoj: require("./qduoj").checker,
-    domjudge: require("./domjudge").checker
+    domjudge: require("./domjudge").checker,
 };
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -67,7 +67,7 @@ export async function runCustomChecker(
     answerFile: MappedPath,
     code: string,
     workingDirectory: MappedPath,
-    tempDirectoryOutside: string
+    tempDirectoryOutside: string,
 ) {
     return await customCheckerInterfaces[checker.interface].runChecker(
         checker,
@@ -88,7 +88,7 @@ export async function runCustomChecker(
                     stdoutFile: stdout,
                     stderrFile: stderr,
                     parameters,
-                    compileResultExtraInfo: checkerCompileResult.extraInfo
+                    compileResultExtraInfo: checkerCompileResult.extraInfo,
                 }),
                 time: timeLimit,
                 memory: memoryLimit * 1024 * 1024,
@@ -98,15 +98,15 @@ export async function runCustomChecker(
                     {
                         mappedPath: {
                             outside: checkerCompileResult.binaryDirectory,
-                            inside: SANDBOX_INSIDE_PATH_BINARY
+                            inside: SANDBOX_INSIDE_PATH_BINARY,
                         },
-                        readOnly: true
+                        readOnly: true,
                     },
                     {
                         mappedPath: workingDirectory,
-                        readOnly: false
-                    }
-                ]
-            })
+                        readOnly: false,
+                    },
+                ],
+            }),
     );
 }

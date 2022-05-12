@@ -17,15 +17,15 @@ const queue = new Queue(Math.min(availableWorkingDirectories.length, config.maxC
  * there're exceptions.
  */
 export async function runTaskQueued<T>(task: (taskWorkingDirectory: string, disposer?: Disposer) => Promise<T>) {
-  return await queue.add(async () => {
-    const taskWorkingDirectory = availableWorkingDirectories.pop();
-    const disposer = new Disposer();
-    try {
-      await ensureDirectoryEmpty(taskWorkingDirectory);
-      return await task(taskWorkingDirectory, disposer);
-    } finally {
-      availableWorkingDirectories.push(taskWorkingDirectory);
-      disposer.dispose();
-    }
-  });
+    return await queue.add(async () => {
+        const taskWorkingDirectory = availableWorkingDirectories.pop();
+        const disposer = new Disposer();
+        try {
+            await ensureDirectoryEmpty(taskWorkingDirectory);
+            return await task(taskWorkingDirectory, disposer);
+        } finally {
+            availableWorkingDirectories.push(taskWorkingDirectory);
+            disposer.dispose();
+        }
+    });
 }

@@ -54,9 +54,6 @@ rules:
   # `any` is evil. Use `unknown` instead.
   "@typescript-eslint/no-explicit-any": error
 
-  # Prefer `x => {}` to `(x) => {}` when x is the only argument.
-  arrow-parens: [error, as-needed]
-
   # We organize almost everything to methods of the related classes since Nest.js's architecture.
   # It's fine for some methods not using any dependency class or member variables.
   class-methods-use-this: off

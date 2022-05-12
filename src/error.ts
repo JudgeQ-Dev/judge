@@ -6,9 +6,9 @@
 import { OmittableString, omittableStringToString } from "./omittableString";
 
 export class ConfigurationError extends Error {
-  constructor(public originalMessage: OmittableString) {
-    super(omittableStringToString(originalMessage));
-  }
+    constructor(public originalMessage: OmittableString) {
+        super(omittableStringToString(originalMessage));
+    }
 }
 
 /**

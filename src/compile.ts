@@ -13,7 +13,7 @@ import {
     SandboxConfigWithoutMountInfo,
     runSandbox,
     SANDBOX_INSIDE_PATH_SOURCE,
-    SANDBOX_INSIDE_PATH_BINARY
+    SANDBOX_INSIDE_PATH_BINARY,
 } from "./sandbox";
 import config, { serverSideConfig } from "./config";
 import { runTaskQueued } from "./taskQueue";
@@ -43,9 +43,9 @@ async function hashCompileTask(compileTask: CompileTask): Promise<string> {
             (await Promise.all(
                 Object.entries(compileTask.extraSourceFiles).map(async ([filename, fileUuid]) => [
                     filename,
-                    await getFileHash(fileUuid)
-                ])
-            ))
+                    await getFileHash(fileUuid),
+                ]),
+            )),
     });
 }
 
@@ -65,7 +65,7 @@ export class CompileResultSuccess implements CompileResult {
         public readonly message: OmittableString,
         public readonly binaryDirectory: string,
         public readonly binaryDirectorySize: number,
-        public readonly extraInfo: string
+        public readonly extraInfo: string,
     ) {}
 
     // The referenceCount is initially zero, the result must be referenced at least once
@@ -92,7 +92,7 @@ export class CompileResultSuccess implements CompileResult {
             this.message,
             newBinaryDirectory,
             this.binaryDirectorySize,
-            this.extraInfo
+            this.extraInfo,
         );
     }
 }
@@ -105,16 +105,16 @@ export class CompileResultSuccess implements CompileResult {
 class CompileResultCache {
     private readonly lruCache = new LruCache<string, CompileResultSuccess>({
         max: config.binaryCacheMaxSize,
-        length: result => result.binaryDirectorySize,
+        length: (result) => result.binaryDirectorySize,
         dispose: (compileTaskHash, result) => {
             winston.verbose(`dispose() from compile result cache: ${compileTaskHash}`);
             setImmediate(() => {
                 // It's safe NOT to await it..
                 result
                     .dereference()
-                    .catch(e => winston.error(`Failed to remove compile result on evicting cache: ${e.stack}`));
+                    .catch((e) => winston.error(`Failed to remove compile result on evicting cache: ${e.stack}`));
             });
-        }
+        },
     });
 
     // The set()/get()'s returned result is reference()-ed
@@ -168,29 +168,29 @@ export async function compile(compileTask: CompileTask): Promise<CompileResult> 
             compileTaskHash,
             (pendingCompileTask = {
                 resultConsumers,
-                promise: runTaskQueued(async taskWorkingDirectory => {
+                promise: runTaskQueued(async (taskWorkingDirectory) => {
                     // The compileResult is already reference()-ed
                     const compileResult = await doCompile(
                         compileTask,
                         compileTaskHash,
                         languageConfig,
-                        taskWorkingDirectory
+                        taskWorkingDirectory,
                     );
                     winston.verbose(`Compile result: ${JSON.stringify(compileResult)}`);
 
                     for (const resultConsumer of resultConsumers)
                         resultConsumer(
-                            compileResult instanceof CompileResultSuccess ? compileResult.reference() : compileResult
+                            compileResult instanceof CompileResultSuccess ? compileResult.reference() : compileResult,
                         );
 
                     if (compileResult instanceof CompileResultSuccess) await compileResult.dereference();
-                }).finally(() => pendingCompileTasks.delete(compileTaskHash))
-            })
+                }).finally(() => pendingCompileTasks.delete(compileTaskHash)),
+            }),
         );
     }
 
     let result: CompileResult;
-    pendingCompileTask.resultConsumers.push(r => {
+    pendingCompileTask.resultConsumers.push((r) => {
         result = r;
     });
     await pendingCompileTask.promise;
@@ -203,17 +203,17 @@ async function doCompile(
     compileTask: CompileTask,
     compileTaskHash: string,
     languageConfig: LanguageConfig<unknown>,
-    taskWorkingDirectory: string
+    taskWorkingDirectory: string,
 ): Promise<CompileResult> {
     const { sourceFilename, binarySizeLimit } = languageConfig.getMetaOptions(compileTask.compileAndRunOptions);
 
     const sourceDirectory: MappedPath = {
         outside: safelyJoinPath(taskWorkingDirectory, "source"),
-        inside: SANDBOX_INSIDE_PATH_SOURCE
+        inside: SANDBOX_INSIDE_PATH_SOURCE,
     };
     const binaryDirectory: MappedPath = {
         outside: safelyJoinPath(taskWorkingDirectory, "working"),
-        inside: SANDBOX_INSIDE_PATH_BINARY
+        inside: SANDBOX_INSIDE_PATH_BINARY,
     };
 
     const tempDirectoryOutside = safelyJoinPath(taskWorkingDirectory, "temp");
@@ -221,13 +221,13 @@ async function doCompile(
     await Promise.all([
         ensureDirectoryEmpty(sourceDirectory.outside),
         ensureDirectoryEmpty(binaryDirectory.outside),
-        ensureDirectoryEmpty(tempDirectoryOutside)
+        ensureDirectoryEmpty(tempDirectoryOutside),
     ]);
 
     await Promise.all(
         Object.entries(compileTask.extraSourceFiles || {}).map(([dst, src]) =>
-            fs.promises.copyFile(getFile(src), safelyJoinPath(sourceDirectory.outside, dst))
-        )
+            fs.promises.copyFile(getFile(src), safelyJoinPath(sourceDirectory.outside, dst)),
+        ),
     );
 
     const sourceFile = safelyJoinPath(sourceDirectory, sourceFilename);
@@ -237,7 +237,7 @@ async function doCompile(
         sourceDirectoryInside: sourceDirectory.inside,
         sourcePathInside: sourceFile.inside,
         binaryDirectoryInside: binaryDirectory.inside,
-        compileAndRunOptions: compileTask.compileAndRunOptions
+        compileAndRunOptions: compileTask.compileAndRunOptions,
     });
 
     // The `taskId` parameter of `runSandbox` is just used to cancel the sandbox
@@ -248,28 +248,28 @@ async function doCompile(
         extraMounts: [
             {
                 mappedPath: sourceDirectory,
-                readOnly: true
+                readOnly: true,
             },
             {
                 mappedPath: binaryDirectory,
-                readOnly: false
-            }
-        ]
+                readOnly: false,
+            },
+        ],
     });
 
     const messageFile = safelyJoinPath(binaryDirectory, compileConfig.messageFile);
     const extraInfoFile = compileConfig.extraInfoFile && safelyJoinPath(binaryDirectory, compileConfig.extraInfoFile);
     const [message, extraInfo] = await Promise.all([
-        readFileOmitted(messageFile.outside, serverSideConfig.limit.compilerMessage).then(result => result || ""),
+        readFileOmitted(messageFile.outside, serverSideConfig.limit.compilerMessage).then((result) => result || ""),
         extraInfoFile
             ? fsNative
                   .exists(extraInfoFile.outside)
-                  .then(exists => (exists ? fs.promises.readFile(extraInfoFile.outside, "utf-8") : null))
-            : null
+                  .then((exists) => (exists ? fs.promises.readFile(extraInfoFile.outside, "utf-8") : null))
+            : null,
     ]);
     await Promise.all([
         fsNative.remove(messageFile.outside),
-        extraInfoFile ? fsNative.remove(extraInfoFile.outside) : null
+        extraInfoFile ? fsNative.remove(extraInfoFile.outside) : null,
     ]);
 
     if (sandboxResult.status === SandboxStatus.OK) {
@@ -282,8 +282,8 @@ async function doCompile(
                     message: prependOmittableString(
                         `The source code compiled to ${binaryDirectorySize} bytes, exceeding the size limit.\n\n`,
                         message,
-                        true
-                    )
+                        true,
+                    ),
                 };
             } else if (binaryDirectorySize > config.binaryCacheMaxSize) {
                 return {
@@ -292,8 +292,8 @@ async function doCompile(
                     message: prependOmittableString(
                         `The source code compiled to ${binaryDirectorySize} bytes, exceeding the limit of cache storage.\n\n`,
                         message,
-                        true
-                    )
+                        true,
+                    ),
                 };
             } else {
                 // We must done copying it to the cache before returning
@@ -305,15 +305,15 @@ async function doCompile(
                         message,
                         binaryDirectory.outside,
                         binaryDirectorySize,
-                        extraInfo
-                    )
+                        extraInfo,
+                    ),
                 );
             }
         } else {
             return {
                 compileTaskHash,
                 success: false,
-                message
+                message,
             };
         }
     } else {
@@ -323,8 +323,8 @@ async function doCompile(
             message: prependOmittableString(
                 `A ${SandboxStatus[sandboxResult.status]} encountered while compiling the code.\n\n`,
                 message,
-                true
-            )
+                true,
+            ),
         };
     }
 }

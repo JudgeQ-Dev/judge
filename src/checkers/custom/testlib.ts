@@ -20,13 +20,13 @@ export const checker: CustomChecker = {
         answerFile,
         code,
         workingDirectory,
-        runSandboxForCustomChecker
+        runSandboxForCustomChecker,
     ) {
         const stderrFile = safelyJoinPath(workingDirectory, uuid());
         const sandboxResult = await runSandboxForCustomChecker(null, null, stderrFile.inside, [
             inputFile.inside,
             outputFile.inside,
-            answerFile.inside
+            answerFile.inside,
         ]);
 
         if (sandboxResult.status !== SandboxStatus.OK) {
@@ -37,5 +37,5 @@ export const checker: CustomChecker = {
         const message = await readFileOmitted(stderrFile.outside, MESSAGE_LENGTH_LIMIT);
 
         return parseTestlibMessage(message);
-    }
+    },
 };

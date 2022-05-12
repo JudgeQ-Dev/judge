@@ -5,10 +5,10 @@ import config from "./config";
 import rpc from "./rpc";
 
 if (process.getuid() !== 0) {
-  winston.error("This program requires root to run");
-  process.exit(1);
+    winston.error("This program requires root to run");
+    process.exit(1);
 }
 
 rpc.connect().then(() => {
-  for (let i = 0; i < config.taskConsumingThreads; i++) rpc.startTaskConsumerThread(i);
+    for (let i = 0; i < config.taskConsumingThreads; i++) rpc.startTaskConsumerThread(i);
 });

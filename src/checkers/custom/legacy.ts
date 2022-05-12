@@ -16,7 +16,7 @@ export const checker: CustomChecker = {
         answerFile,
         code,
         workingDirectory,
-        runSandboxForCustomChecker
+        runSandboxForCustomChecker,
     ) {
         const stdoutFile = safelyJoinPath(workingDirectory, uuid());
         const stderrFile = safelyJoinPath(workingDirectory, uuid());
@@ -25,7 +25,7 @@ export const checker: CustomChecker = {
             fs.promises.rename(outputFile.outside, safelyJoinPath(workingDirectory.outside, "user_out")),
             fs.promises.rename(inputFile.outside, safelyJoinPath(workingDirectory.outside, "input")),
             fs.promises.rename(answerFile.outside, safelyJoinPath(workingDirectory.outside, "answer")),
-            fs.promises.writeFile(safelyJoinPath(workingDirectory.outside, "code"), code || "")
+            fs.promises.writeFile(safelyJoinPath(workingDirectory.outside, "code"), code || ""),
         ]);
 
         const sandboxResult = await runSandboxForCustomChecker(null, stdoutFile.inside, stderrFile.inside);
@@ -46,7 +46,7 @@ export const checker: CustomChecker = {
 
         return {
             score,
-            checkerMessage: message
+            checkerMessage: message,
         };
-    }
+    },
 };

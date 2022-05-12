@@ -5,21 +5,21 @@ const fsNative = bindings("fs_native");
 /* eslint-disable */
 // Native exceptions have no callback stacks. Make a new error object with the stack.
 function wrap(func: Function, async: boolean): any {
-  return async
-    ? async (...args: any[]) => {
-        try {
-          return await func(...args);
-        } catch (e) {
-          throw new Error(e.message);
-        }
-      }
-    : (...args: any[]) => {
-        try {
-          return func(...args);
-        } catch (e) {
-          throw new Error(e.message);
-        }
-      };
+    return async
+        ? async (...args: any[]) => {
+              try {
+                  return await func(...args);
+              } catch (e) {
+                  throw new Error(e.message);
+              }
+          }
+        : (...args: any[]) => {
+              try {
+                  return func(...args);
+              } catch (e) {
+                  throw new Error(e.message);
+              }
+          };
 }
 /* eslint-enable */
 
@@ -42,13 +42,13 @@ export const calcSize: (path: string) => Promise<number> = wrap(fsNative.calcSiz
 export const calcSizeSync: (path: string) => number = wrap(fsNative.calcSizeSync, false);
 
 export interface ChmodownOptions {
-  mode?: number;
-  owner?: string | number;
+    mode?: number;
+    owner?: string | number;
 
-  /**
-   * If it's `true`, it means to use the gid of the `owner` option.
-   */
-  group?: string | number | boolean;
+    /**
+     * If it's `true`, it means to use the gid of the `owner` option.
+     */
+    group?: string | number | boolean;
 }
 
 export const chmodown: (path: string, options: ChmodownOptions) => Promise<void> = wrap(fsNative.chmodown, true);

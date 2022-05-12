@@ -10,121 +10,126 @@ import { safelyJoinPath, ensureDirectoryEmpty } from "@/utils";
 import * as fsNative from "@/fsNative";
 
 export interface SubmissionFileInfo {
-  uuid: string;
-  url: string;
+    uuid: string;
+    url: string;
 }
 
 export interface SubmissionFileUnzipResult {
-  path: string;
-  status: Record<
-    string,
-    {
-      path?: string;
-      success?: boolean;
-      sizeExceededLimit?: boolean;
-    }
-  >;
+    path: string;
+    status: Record<
+        string,
+        {
+            path?: string;
+            success?: boolean;
+            sizeExceededLimit?: boolean;
+        }
+    >;
 }
 
 export class SubmissionFile {
-  readonly path: string;
+    readonly path: string;
 
-  readonly unzippedPath: string;
+    readonly unzippedPath: string;
 
-  private readonly downloadPromise: Promise<void>;
+    private readonly downloadPromise: Promise<void>;
 
-  private disposed: boolean;
+    private disposed: boolean;
 
-  constructor(fileInfo: SubmissionFileInfo) {
-    // It's fine to use the uuid as filename since every submission has a different file uuid
-    this.path = safelyJoinPath(tmpdir(), fileInfo.uuid);
-    this.unzippedPath = safelyJoinPath(tmpdir(), `${fileInfo.uuid}_unzipped`);
+    constructor(fileInfo: SubmissionFileInfo) {
+        // It's fine to use the uuid as filename since every submission has a different file uuid
+        this.path = safelyJoinPath(tmpdir(), fileInfo.uuid);
+        this.unzippedPath = safelyJoinPath(tmpdir(), `${fileInfo.uuid}_unzipped`);
 
-    // eslint-disable-next-line no-async-promise-executor
-    this.downloadPromise = axios({
-      url: fileInfo.url,
-      responseType: "stream"
-    }).then(
-      response =>
-        new Promise((resolve, reject) => {
-          if (this.disposed) {
-            resolve();
-            return;
-          }
+        // eslint-disable-next-line no-async-promise-executor
+        this.downloadPromise = axios({
+            url: fileInfo.url,
+            responseType: "stream",
+        }).then(
+            (response) =>
+                new Promise((resolve, reject) => {
+                    if (this.disposed) {
+                        resolve();
+                        return;
+                    }
 
-          const fileStream = fs.createWriteStream(this.path);
+                    const fileStream = fs.createWriteStream(this.path);
 
-          response.data.pipe(fileStream);
+                    response.data.pipe(fileStream);
 
-          fileStream.on("finish", resolve);
-          fileStream.on("error", reject);
+                    fileStream.on("finish", resolve);
+                    fileStream.on("error", reject);
 
-          winston.verbose(`SubmissionFile: start downloading file ${fileInfo.uuid}`);
-        })
-    );
-  }
+                    winston.verbose(`SubmissionFile: start downloading file ${fileInfo.uuid}`);
+                }),
+        );
+    }
 
-  async waitForDownload() {
-    return await this.downloadPromise;
-  }
+    async waitForDownload() {
+        return await this.downloadPromise;
+    }
 
-  async unzip(wantedFiles: string[]) {
-    await ensureDirectoryEmpty(this.unzippedPath);
+    async unzip(wantedFiles: string[]) {
+        await ensureDirectoryEmpty(this.unzippedPath);
 
-    winston.verbose(`SubmissionFile.unzip: start unzipping file ${this.path}`);
+        winston.verbose(`SubmissionFile.unzip: start unzipping file ${this.path}`);
 
-    const writeFilePromises: Promise<void>[] = [];
-    const result: SubmissionFileUnzipResult = { path: this.unzippedPath, status: {} };
+        const writeFilePromises: Promise<void>[] = [];
+        const result: SubmissionFileUnzipResult = { path: this.unzippedPath, status: {} };
 
-    // The unzipper library is poorly typed
-    await fs
-      .createReadStream(this.path)
-      .pipe(unzipper.Parse())
-      .on("entry", (entry: unzipper.Entry) => {
-        if (entry.type === "File" && wantedFiles.includes(entry.path)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if ((entry.vars as any).uncompressedSize <= serverSideConfig.limit.outputSize) {
-            // Unzip this file
-            writeFilePromises.push(
-              new Promise((resolve, reject) => {
-                try {
-                  entry.pipe(fs.createWriteStream(safelyJoinPath(this.unzippedPath, entry.path))).on("finish", () => {
-                    result.status[entry.path] = { success: true, path: safelyJoinPath(this.unzippedPath, entry.path) };
-                    resolve();
-                  });
-                  entry.on("error", reject);
-                } catch (e) {
-                  reject(e);
+        // The unzipper library is poorly typed
+        await fs
+            .createReadStream(this.path)
+            .pipe(unzipper.Parse())
+            .on("entry", (entry: unzipper.Entry) => {
+                if (entry.type === "File" && wantedFiles.includes(entry.path)) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    if ((entry.vars as any).uncompressedSize <= serverSideConfig.limit.outputSize) {
+                        // Unzip this file
+                        writeFilePromises.push(
+                            new Promise((resolve, reject) => {
+                                try {
+                                    entry
+                                        .pipe(fs.createWriteStream(safelyJoinPath(this.unzippedPath, entry.path)))
+                                        .on("finish", () => {
+                                            result.status[entry.path] = {
+                                                success: true,
+                                                path: safelyJoinPath(this.unzippedPath, entry.path),
+                                            };
+                                            resolve();
+                                        });
+                                    entry.on("error", reject);
+                                } catch (e) {
+                                    reject(e);
+                                }
+                            }),
+                        );
+
+                        return;
+                    } else {
+                        // Size exceeded the limit
+                        result.status[entry.path] = { sizeExceededLimit: true };
+                    }
                 }
-              })
-            );
 
-            return;
-          } else {
-            // Size exceeded the limit
-            result.status[entry.path] = { sizeExceededLimit: true };
-          }
-        }
+                // Ignore this file
+                entry.autodrain();
+            })
+            .promise();
 
-        // Ignore this file
-        entry.autodrain();
-      })
-      .promise();
+        winston.verbose(`SubmissionFile.unzip: awaiting writing unzipped files of ${this.path}`);
 
-    winston.verbose(`SubmissionFile.unzip: awaiting writing unzipped files of ${this.path}`);
+        await Promise.all(writeFilePromises);
 
-    await Promise.all(writeFilePromises);
+        winston.verbose(`SubmissionFile.unzip: unzipped ${this.path}`);
 
-    winston.verbose(`SubmissionFile.unzip: unzipped ${this.path}`);
+        return result;
+    }
 
-    return result;
-  }
+    dispose() {
+        this.disposed = true;
 
-  dispose() {
-    this.disposed = true;
-
-    // No need to await
-    fsNative.remove(this.path);
-    fsNative.remove(this.unzippedPath);
-  }
+        // No need to await
+        fsNative.remove(this.path);
+        fsNative.remove(this.unzippedPath);
+    }
 }

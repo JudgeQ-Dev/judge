@@ -14,7 +14,7 @@ export const checker: CustomChecker = {
         answerFile,
         code,
         workingDirectory,
-        runSandboxForCustomChecker
+        runSandboxForCustomChecker,
     ) {
         const scoreFile = safelyJoinPath(workingDirectory, uuid());
         const messageFile = safelyJoinPath(workingDirectory, uuid());
@@ -25,7 +25,7 @@ export const checker: CustomChecker = {
             answerFile.inside,
             "100",
             scoreFile.inside,
-            messageFile.inside
+            messageFile.inside,
         ]);
 
         if (sandboxResult.status !== SandboxStatus.OK) {
@@ -44,7 +44,7 @@ export const checker: CustomChecker = {
 
         return {
             score,
-            checkerMessage: message
+            checkerMessage: message,
         };
-    }
+    },
 };
