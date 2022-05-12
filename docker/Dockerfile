@@ -33,6 +33,7 @@ RUN chmod +x /root/docker_entry.sh \
     && npm i -g pnpm \
     && apk add tzdata \
     && apk add arch-install-scripts \
+    && apk add tar \
     && apk add zstd \
     && tar --use-compress-program=unzstd -xvf /root/${ROOTFS_TARGET_NAME} -C /opt/
 
