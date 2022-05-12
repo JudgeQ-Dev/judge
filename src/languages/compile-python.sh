@@ -13,6 +13,7 @@
 SOURCE_FILENAME="main.py"
 
 # Change working directory to destination binary directory
+# shellcheck disable=SC2164
 cd "$3"
 # Copy the source file to working directory
 cp "$2/$SOURCE_FILENAME" .

@@ -12,6 +12,7 @@
 # stdout: The name of compiled class file with `.class` suffix removed
 
 # Change working directory to destination binary directory
+# shellcheck disable=SC2164
 cd "$2"
 # Copy the source file to working directory
 cp "$1" .
@@ -27,7 +28,7 @@ JAVAC_EXIT_CODE=$?
 # If javac fails with the original filename
 if [ "$JAVAC_EXIT_CODE" != 0 ]; then
     # Extract the public class name from javac's output
-    PUBLIC_CLASS_NAME=$(perl -wnE 'use open ":std", ":encoding(UTF-8)"; say for /^\S[\S\s]+error: class (\S+) is public, should be declared in a file named (\S+)\.java$/g' <<< "$JAVAC_OUTPUT" | head -n 1)
+    PUBLIC_CLASS_NAME=$(perl -wnE 'use open ":std", ":encoding(UTF-8)"; say for /^\S[\S\s]+error: class (\S+) is public, should be declared in a file named (\S+)\.java$/g' <<<"$JAVAC_OUTPUT" | head -n 1)
 
     # If we got empty string, there must be other errors
     if [ -z "$PUBLIC_CLASS_NAME" ]; then
