@@ -9,6 +9,7 @@ COPY ./ ./judge-core
 COPY --from=judgeq/sandbox-rootfs:ubuntu20.04 /root/${ROOTFS_TARGET_NAME} ./
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LLVM_VERSION=14
 
 RUN apt update \
     && apt install --no-install-recommends --no-install-suggests -y \
@@ -17,7 +18,7 @@ RUN apt update \
     libfmt-dev \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \\
-    && ./llvm.sh 14 all \\
+    && ./llvm.sh ${LLVM_VERSION} all \\
     && rm llvm.sh \
     && cd judge-core \
     && npm i -g pnpm \
