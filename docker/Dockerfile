@@ -29,7 +29,6 @@ RUN cd judge-core \
     && tar --use-compress-program=unzstd -xvf /root/${ROOTFS_TARGET_NAME} -C /opt/ \
     && rm /root/${ROOTFS_TARGET_NAME}
 
-
 ENTRYPOINT ["/root/docker_entry.sh"]
 
 CMD ["primary"]
