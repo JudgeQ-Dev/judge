@@ -22,7 +22,7 @@ ORIGINAL_FILENAME=$(basename "$1")
 
 # Try compiling with the original filename
 JAVAC_OPTIONS=""
-JAVAC_OUTPUT=$(javac $JAVAC_OPTIONS "$ORIGINAL_FILENAME" 2>&1)
+JAVAC_OUTPUT=$(javac "$JAVAC_OPTIONS" "$ORIGINAL_FILENAME" 2>&1)
 JAVAC_EXIT_CODE=$?
 
 # If javac fails with the original filename
@@ -43,7 +43,7 @@ if [ "$JAVAC_EXIT_CODE" != 0 ]; then
         mv "$ORIGINAL_FILENAME" "$EXPECTED_FILENAME"
         # No need to save the output javac since we don't need to parse it
         # But redirect stdout to stderr since we print its class name to stdout
-        javac $JAVAC_OPTIONS "$EXPECTED_FILENAME" 1>&2
+        javac "$JAVAC_OPTIONS" "$EXPECTED_FILENAME" 1>&2
 
         # If javac fails
         JAVAC_EXIT_CODE=$?
@@ -62,7 +62,7 @@ else
     # Print javac's output to stderr
     echo "$JAVAC_OUTPUT" >&2
     # Remove ".java" suffix from the original filename as the class name (without newline)
-    echo -n ${ORIGINAL_FILENAME/.java/}
+    echo -n "${ORIGINAL_FILENAME/.java/}"
     # Remove source file
     rm "$ORIGINAL_FILENAME"
     exit 0
