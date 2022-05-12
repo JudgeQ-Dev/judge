@@ -10,19 +10,12 @@ COPY --from=judgeq/sandbox-rootfs:ubuntu20.04 /root/${ROOTFS_TARGET_NAME} ./
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LLVM_VERSION=14
+ENV CMAKE_VERSION=3.23.1
 
-RUN apt update \
-    && apt install --no-install-recommends --no-install-suggests -y \
-    zstd \
-    wget \
-    libfmt-dev \
-    lsb-release \
-    software-properties-common \
-    && wget https://apt.llvm.org/llvm.sh \
-    && chmod +x llvm.sh \
-    && ./llvm.sh ${LLVM_VERSION} all \
-    && rm llvm.sh \
-    && cd judge-core \
+RUN cd judge-core \
+    && bash ./docker/install/install_common.sh \
+    && bash ./docker/install/install_cmake.sh \
+    && bash ./docker/install/install_llvm.sh \
     && npm i -g pnpm \
     && CC=clang CXX=clang++ CXXFLAGS="-stdlib=libc++" LDFLAGS="-stdlib=libc++ -lc++abi -fuse-ld=lld" pnpm i \
     && cp ./docker/docker_entry.sh /root/docker_entry.sh \
