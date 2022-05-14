@@ -10,6 +10,8 @@ if [ ! -f "/root/config/config.yaml" ]; then
     cp /root/judge-core/config-example.yaml /root/config/config.yaml
 fi
 
+mount --bind /opt/rootfs /opt/rootfs
+
 if [ X"${1}" = X"primary" ]; then
     cd /root/judge-core
     exec pnpm start
