@@ -10,6 +10,8 @@ if [ ! -f "/root/config/config.yaml" ]; then
     cp /root/judge-core/config-example.yaml /root/config/config.yaml
 fi
 
+mount --bind /opt/rootfs /opt/rootfs
+
 mount_tmpfs() {
     path="${1}"
     size="${2}"
@@ -25,10 +27,10 @@ mount_tmpfs() {
     findmnt "${path}" -t tmpfs || mount -t tmpfs -o size="${size}" tmpfs "${path}"
 }
 
-mount --bind /opt/rootfs /opt/rootfs
-
-if [ -n "${MOUNT_COMMAND}" ]; then
-    "${MOUNT_COMMAND}"
+if [ -n "${MOUNT_PATH_LIST}" ]; then
+    for path in ${MOUNT_PATH_LIST}; do
+        mount_tmpfs "${path}" "${MOUNT_TMPFS_SIZE}"
+    done
 fi
 
 if [ X"${1}" = X"primary" ]; then
