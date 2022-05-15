@@ -18,6 +18,10 @@ mount_tmpfs() {
         size=512M
     fi
 
+    if [ ! -d "${path}" ]; then
+        mkdir -p "${path}"
+    fi
+
     findmnt "${path}" -t tmpfs || mount -t tmpfs -o size="${size}" tmpfs "${path}"
 }
 
